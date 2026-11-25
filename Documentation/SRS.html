@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ATS Resume Analyser — Software Requirements Specification</title>
+<style>
+@page {
+  size: A4;
+  margin: 20mm 18mm 22mm 18mm;
+}
+
+:root {
+  --ink: #1a202c;
+  --muted: #55607a;
+  --line: #d7dce7;
+  --accent: #0f766e;
+  --accent-soft: #e6f4f1;
+  --code-bg: #f4f6fa;
+}
+
+* { box-sizing: border-box; }
+
+html { font-size: 15px; }
+
+body {
+  margin: 0;
+  padding: 32px 20px 64px;
+  background: #eef1f6;
+  color: var(--ink);
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Inter, Roboto, Arial, sans-serif;
+  line-height: 1.55;
+}
+
+.page {
+  max-width: 210mm;
+  margin: 0 auto;
+  background: #ffffff;
+  padding: 24mm 20mm;
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.12);
+}
+
+/* Cover */
+.cover { min-height: 220mm; display: flex; flex-direction: column; justify-content: center; }
+.cover .eyebrow {
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 700;
+}
+.cover h1 {
+  font-size: 2.5rem;
+  line-height: 1.15;
+  margin: 10px 0 6px;
+  border: 0;
+  padding: 0;
+  page-break-before: avoid;
+}
+.cover .subtitle { font-size: 1.3rem; color: var(--muted); margin: 0 0 28px; }
+.cover .rule { height: 4px; width: 84px; background: var(--accent); border-radius: 2px; }
+.cover table { margin-top: 36px; width: 100%; border: 0; }
+.cover table td { border: 0; padding: 4px 0; font-size: 0.92rem; }
+.cover table td:first-child { width: 130px; color: var(--muted); font-weight: 600; }
+
+/* Headings */
+h1, h2, h3, h4 { line-height: 1.25; color: #10233f; }
+h1 {
+  font-size: 1.55rem;
+  margin: 2.4em 0 0.6em;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--line);
+  page-break-before: always;
+  page-break-after: avoid;
+}
+h1:first-of-type { page-break-before: avoid; }
+h2 { font-size: 1.18rem; margin: 1.8em 0 0.5em; page-break-after: avoid; }
+h3 { font-size: 1.02rem; margin: 1.4em 0 0.4em; page-break-after: avoid; }
+h4 { font-size: 0.95rem; margin: 1.2em 0 0.3em; }
+
+p { margin: 0.55em 0; }
+ul, ol { margin: 0.5em 0 0.9em; padding-left: 1.5em; }
+li { margin: 0.22em 0; }
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.9em 0 1.3em;
+  font-size: 0.87rem;
+  page-break-inside: auto;
+}
+thead { background: var(--accent-soft); }
+th, td {
+  border: 1px solid var(--line);
+  padding: 6px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th { font-weight: 700; color: #0b3d38; }
+tr { page-break-inside: avoid; }
+tbody tr:nth-child(even) { background: #fafbfd; }
+
+/* Code */
+code {
+  font-family: Consolas, "SF Mono", Menlo, monospace;
+  font-size: 0.86em;
+  background: var(--code-bg);
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid #e3e8f2;
+}
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 6px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  page-break-inside: avoid;
+}
+pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+
+blockquote {
+  margin: 1em 0;
+  padding: 10px 16px;
+  border-left: 4px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 6px 6px 0;
+}
+blockquote p { margin: 0; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+hr { border: 0; border-top: 1px solid var(--line); margin: 2em 0; }
+
+/* Screen toolbar */
+.screen-tools {
+  max-width: 210mm;
+  margin: 0 auto 14px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.screen-tools button {
+  font: inherit;
+  padding: 7px 13px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+@media print {
+  html { font-size: 10.5pt; }
+  body { background: #ffffff; padding: 0; }
+  .page { box-shadow: none; padding: 0; max-width: none; }
+  .screen-tools { display: none; }
+  a { color: inherit; }
+  .cover { min-height: 240mm; }
+  pre, table, blockquote { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="screen-tools">
+  <span>Use Print (Ctrl+P) → Save as PDF for the submission copy.</span>
+  <button type="button" onclick="window.print()">Print / Save as PDF</button>
+</div>
+
+<div class="page">
+  <section class="cover">
+    <div class="eyebrow">Group 1 · Project Documentation</div>
+    <h1>Software Requirements Specification</h1>
+    <p class="subtitle">ATS Resume Analyser</p>
+    <div class="rule"></div>
+    <table>
+      <tr><td>Project</td><td>ATS Resume Analyser (Resume Analysis and Improvement Tool)</td></tr>
+<tr><td>Group</td><td>Group 1</td></tr>
+<tr><td>Version</td><td>1.0</td></tr>
+<tr><td>Date</td><td>25 November 2026</td></tr>
+<tr><td>Status</td><td>Baseline — matches the implemented system</td></tr>
+    </table>
+  </section>
+
+  <h1 id="document-control">Document Control</h1>
+<h2 id="revision-history">Revision History</h2>
+<table>
+<thead>
+<tr>
+<th>Revision</th>
+<th>Date</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.1</td>
+<td>25 Nov 2026</td>
+<td>Initial draft from the earlier RAG-based design</td>
+</tr>
+<tr>
+<td>1.0</td>
+<td>25 Nov 2026</td>
+<td>Rewritten for the final 100% rule-based ATS design; RAG, hybrid scoring, and chat removed</td>
+</tr>
+</tbody>
+</table>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#1-introduction">Introduction</a></li>
+<li><a href="#2-overall-description">Overall Description</a></li>
+<li><a href="#3-system-features">System Features</a></li>
+<li><a href="#4-scoring-model">Scoring Model</a></li>
+<li><a href="#5-external-interface-requirements">External Interface Requirements</a></li>
+<li><a href="#6-non-functional-requirements">Non-Functional Requirements</a></li>
+<li><a href="#7-system-architecture">System Architecture</a></li>
+<li><a href="#8-data-requirements">Data Requirements</a></li>
+<li><a href="#9-verification-and-acceptance">Verification and Acceptance</a></li>
+<li><a href="#10-constraints-assumptions-and-risks">Constraints, Assumptions, and Risks</a></li>
+<li><a href="#11-out-of-scope-and-future-work">Out of Scope and Future Work</a></li>
+<li><a href="#12-appendices">Appendices</a></li>
+</ol>
+<h1 id="1-introduction">1. Introduction</h1>
+<h2 id="11-purpose">1.1 Purpose</h2>
+<p>This SRS defines the requirements for the <strong>ATS Resume Analyser</strong>, a web application that
+scores a resume against an explicit, rule-based Applicant Tracking System (ATS) rubric,
+explains every deduction point by point, and offers AI-assisted rewrites that the user can
+apply safely and re-score.</p>
+<p>The document is written for the project team, the course evaluator, and any future
+maintainer. It specifies <em>what</em> the system does and <em>how it is verified</em>, at a level of
+detail that matches the code shipped in <code>Source_Code/</code>.</p>
+<h2 id="12-problem-statement">1.2 Problem Statement</h2>
+<p>Students and early-career applicants routinely receive rejections without any explanation.
+Commercial ATS platforms hide their scoring, and generic advice ("add more keywords",
+"use action verbs") cannot tell a candidate <em>which</em> line of <em>their</em> resume is failing or
+<em>what to write instead</em>. The result is guesswork: candidates rewrite blindly, resubmit, and
+still cannot tell whether the resume improved.</p>
+<p>The system targets one core problem:</p>
+<blockquote>
+<p><strong>Candidates cannot see which specific parts of their resume an ATS rejects, or how to
+fix those parts in their own document.</strong></p>
+</blockquote>
+<p>The product answers that with a transparent score, a point-by-point breakdown, and a
+rewrite that can be applied to the candidate's own text and immediately re-scored.</p>
+<h2 id="13-scope">1.3 Scope</h2>
+<h3 id="in-scope">In scope</h3>
+<ul>
+<li>Uploading a resume as a PDF and converting it into editable plain text.</li>
+<li>Loading a built-in sample resume for demonstration.</li>
+<li>Calibration by experience level (fresher / experienced), target domain, and optional
+  target role.</li>
+<li>Deterministic ATS scoring across six standard resume sections.</li>
+<li>A per-criterion breakdown showing points earned, points available, and advice.</li>
+<li>AI-generated rewrite suggestions (Google Gemini), grounded in the failed criteria and the
+  candidate's exact text, with a rule-based fallback when no key is configured.</li>
+<li>Safe application of a rewrite to the resume, followed by re-scoring with deltas.</li>
+<li>Exporting the edited resume as <code>.txt</code>.</li>
+</ul>
+<h3 id="deliberately-out-of-scope">Deliberately out of scope</h3>
+<ul>
+<li>Retrieval-Augmented Generation, vector databases, and embedding similarity.</li>
+<li>TF-IDF or any learned/hybrid scoring. The score is 100% rule-based.</li>
+<li>Chat with the resume. There is no conversational endpoint or chat pane.</li>
+<li>Job-description matching. The product has one core problem and does not attempt to score
+  fit against a specific posting.</li>
+<li>Accounts, authentication, persistence, and multi-user storage.</li>
+<li>DOCX ingestion, OCR of scanned PDFs, and non-English resumes.</li>
+<li>Recruiter-side or bulk/enterprise features.</li>
+</ul>
+<h2 id="14-definitions-and-abbreviations">1.4 Definitions and Abbreviations</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ATS</strong></td>
+<td>Applicant Tracking System; software that parses and filters resumes before a human reads them.</td>
+</tr>
+<tr>
+<td><strong>ATS Readiness Score</strong></td>
+<td>The system's 0–100 weighted score. A transparent readiness rubric, not a reproduction of any commercial ATS.</td>
+</tr>
+<tr>
+<td><strong>Section score</strong></td>
+<td>A 0–100 score for one of Contact, Summary, Experience, Skills, Projects, Education.</td>
+</tr>
+<tr>
+<td><strong>Criterion</strong></td>
+<td>One explicit check inside a section, with an id, label, earned points, maximum points, advice, and an example.</td>
+</tr>
+<tr>
+<td><strong>Calibration</strong></td>
+<td>The user's experience level, target domain, and optional target role. Changes weights and some checks.</td>
+</tr>
+<tr>
+<td><strong>Suggestion</strong></td>
+<td>A structured rewrite: section, title, reason, optional original snippet, replacement text, and a replaceable flag.</td>
+</tr>
+<tr>
+<td><strong>Replaceable</strong></td>
+<td>True only when the suggestion's <code>original_text</code> was found verbatim in the current resume, so the UI may replace it.</td>
+</tr>
+<tr>
+<td><strong>Bullet</strong></td>
+<td>A resume line beginning with <code>-</code>, <code>*</code>, or <code>•</code>; if fewer than two such lines exist, any line of five or more words is treated as a bullet.</td>
+</tr>
+<tr>
+<td><strong>Metric</strong></td>
+<td>A quantified impact value (percentage, currency, multiplier, count with a unit, or a reduction/increase figure). Bare years are excluded.</td>
+</tr>
+<tr>
+<td><strong>Gemini</strong></td>
+<td>Google's generative model, used only to draft wording. It never computes or alters the score.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="15-references">1.5 References</h2>
+<ol>
+<li>IEEE 830-1998, <em>Recommended Practice for Software Requirements Specifications</em> — structural reference.</li>
+<li>FastAPI documentation, https://fastapi.tiangolo.com</li>
+<li>React documentation, https://react.dev</li>
+<li>Vite documentation, https://vite.dev</li>
+<li><code>pypdf</code> documentation, https://pypdf.readthedocs.io</li>
+<li>Google Gen AI SDK (Python), https://googleapis.github.io/python-genai</li>
+<li>Project <code>README.md</code> and <code>implementation_plan.md</code> in the repository root.</li>
+</ol>
+<h2 id="16-document-overview">1.6 Document Overview</h2>
+<p>Section 2 describes the product and its users. Section 3 specifies each feature with
+inputs, behaviour, and acceptance criteria. Section 4 is the normative scoring model, which
+is the heart of the system. Sections 5–6 cover interfaces and quality attributes. Section 7
+maps requirements to the implemented architecture, and Sections 8–11 cover data,
+verification, risks, and future work.</p>
+<h1 id="2-overall-description">2. Overall Description</h1>
+<h2 id="21-product-perspective">2.1 Product Perspective</h2>
+<p>The product is a self-contained, locally run web application with two processes:</p>
+<ul>
+<li>A <strong>FastAPI</strong> backend that parses PDFs, computes scores, and calls Gemini for suggestions.</li>
+<li>A <strong>React + Vite</strong> single-page frontend that provides a split-screen editor and results panel.</li>
+</ul>
+<p>The frontend dev server proxies <code>/api</code> to the backend, so the browser sees a single origin.
+There is no database and no server-side session state: every score is a pure function of the
+submitted text and calibration. This makes results reproducible and the deployment trivial.</p>
+<p>The previous iteration of this project combined a hand-written ATS heuristic (60%) with a
+TF-IDF similarity score against a small knowledge base (40%), and exposed a chat pane. Both
+were removed: the hybrid score could not explain itself, and the chat duplicated the
+suggestion feature while adding an unbounded API surface. The current system keeps only what
+serves the core problem.</p>
+<h2 id="22-product-functions-summary">2.2 Product Functions (summary)</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F1</td>
+<td>Ingest resume text from PDF upload or sample</td>
+</tr>
+<tr>
+<td>F2</td>
+<td>Calibrate the analysis</td>
+</tr>
+<tr>
+<td>F3</td>
+<td>Compute the rule-based ATS score</td>
+</tr>
+<tr>
+<td>F4</td>
+<td>Explain each section with criteria</td>
+</tr>
+<tr>
+<td>F5</td>
+<td>Generate rewrite suggestions</td>
+</tr>
+<tr>
+<td>F6</td>
+<td>Apply a rewrite safely and edit the resume</td>
+</tr>
+<tr>
+<td>F7</td>
+<td>Re-score after edits and show deltas</td>
+</tr>
+<tr>
+<td>F8</td>
+<td>Export the edited resume</td>
+</tr>
+</tbody>
+</table>
+<h2 id="23-user-classes-and-characteristics">2.3 User Classes and Characteristics</h2>
+<table>
+<thead>
+<tr>
+<th>User</th>
+<th>Description</th>
+<th>Needs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Student / fresher</strong></td>
+<td>Final-year or recent graduate with projects and internships</td>
+<td>Know why a project section scores zero; get a first professional rewrite</td>
+</tr>
+<tr>
+<td><strong>Early-career professional</strong></td>
+<td>1–5 years of experience</td>
+<td>Emphasise work history; quantify impact</td>
+</tr>
+<tr>
+<td><strong>Evaluator / demonstrator</strong></td>
+<td>Course instructor or reviewer</td>
+<td>Reproducible demo without API keys; visible rule logic</td>
+</tr>
+<tr>
+<td><strong>Maintainer</strong></td>
+<td>Future developer</td>
+<td>Clear rubric, isolated modules, tests</td>
+</tr>
+</tbody>
+</table>
+<p>The primary user is technically comfortable but not a resume expert. The interface therefore
+uses plain language, never raw regex, and always shows <em>points earned out of points available</em>.</p>
+<h2 id="24-operating-environment">2.4 Operating Environment</h2>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Backend runtime</td>
+<td>Python 3.10+ (3.11/3.12 recommended)</td>
+</tr>
+<tr>
+<td>Frontend runtime</td>
+<td>Node.js 18+ (20 LTS recommended)</td>
+</tr>
+<tr>
+<td>Browser</td>
+<td>Current Chrome, Edge, Firefox, or Safari</td>
+</tr>
+<tr>
+<td>Operating system</td>
+<td>Windows, macOS, or Linux (developed and verified on Windows)</td>
+</tr>
+<tr>
+<td>Deployment</td>
+<td>Local processes; backend <code>uvicorn</code> on port 8000, frontend dev server on port 5173</td>
+</tr>
+<tr>
+<td>Network</td>
+<td>None required except an optional outbound HTTPS call to Gemini when a key is supplied</td>
+</tr>
+</tbody>
+</table>
+<h2 id="25-design-constraints">2.5 Design Constraints</h2>
+<ul>
+<li><strong>C1 — Explainability.</strong> The score must be reconstructible from displayed criteria; no
+  hidden component, no learned weights.</li>
+<li><strong>C2 — Determinism.</strong> Identical text and calibration must always produce an identical score.</li>
+<li><strong>C3 — Graceful degradation.</strong> Every feature except AI wording must work with no API key and
+  no network.</li>
+<li><strong>C4 — No invented facts.</strong> Rewrites must not fabricate employers, titles, dates, degrees,
+  or metrics; missing numbers are represented as placeholders such as <code>[X%]</code>.</li>
+<li><strong>C5 — Safe editing.</strong> The system must never silently append text to a resume.</li>
+<li><strong>C6 — Statelessness.</strong> No resume content is stored on the server after a response.</li>
+</ul>
+<h2 id="26-assumptions-and-dependencies">2.6 Assumptions and Dependencies</h2>
+<ul>
+<li>The resume is machine-readable text (a text-based PDF, not a scan).</li>
+<li>Section headings can be normalised to <code>## SECTION</code> form; the PDF parser does this for known
+  synonyms, and users can type or edit headings directly.</li>
+<li>Resumes are in English.</li>
+<li>Gemini availability, quota, and latency are outside the system's control; failures fall back
+  to rule-based advice.</li>
+<li><code>pypdf</code> extraction quality depends on the source PDF's text layer.</li>
+</ul>
+<h1 id="3-system-features">3. System Features</h1>
+<p>Each feature below states its description, triggering inputs, behaviour, and acceptance
+criteria. Requirement identifiers are used in the traceability matrix in Section 12.3.</p>
+<h2 id="31-f1-resume-ingestion">3.1 F1 — Resume Ingestion</h2>
+<h3 id="311-description-and-priority">3.1.1 Description and priority</h3>
+<p>Users bring their own resume into the editor. Priority: <strong>High</strong> (prerequisite for every
+other feature).</p>
+<h3 id="312-functional-requirements">3.1.2 Functional requirements</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-1.1</td>
+<td>The system shall expose <code>GET /api/sample-resume</code> returning a demonstration resume as <code>{ "resume_text": string }</code>.</td>
+</tr>
+<tr>
+<td>FR-1.2</td>
+<td>The frontend shall load the sample resume automatically on first mount and analyse it without tracking deltas.</td>
+</tr>
+<tr>
+<td>FR-1.3</td>
+<td>The system shall expose <code>POST /api/parse-pdf</code> accepting one multipart file field named <code>file</code>.</td>
+</tr>
+<tr>
+<td>FR-1.4</td>
+<td>The parser shall reject a file whose name does not end in <code>.pdf</code> with HTTP 400 and a human-readable detail.</td>
+</tr>
+<tr>
+<td>FR-1.5</td>
+<td>The parser shall reject an empty upload and a PDF with no extractable text, each with HTTP 400.</td>
+</tr>
+<tr>
+<td>FR-1.6</td>
+<td>The parser shall extract text from every page, collapse runs of whitespace to single spaces, drop blank-line runs, and normalise bullet glyphs (<code>•</code>, <code>●</code>, <code>▪</code>, <code>◦</code>, <code>‣</code>) to <code>-</code>.</td>
+</tr>
+<tr>
+<td>FR-1.7</td>
+<td>The parser shall map recognised section headings to canonical <code>## SUMMARY</code>, <code>## EXPERIENCE</code>, <code>## SKILLS</code>, <code>## PROJECTS</code>, and <code>## EDUCATION</code> lines, accepting synonyms such as "Professional Summary", "Career Objective", "Core Competencies", and "Academic Background".</td>
+</tr>
+<tr>
+<td>FR-1.8</td>
+<td>A successful parse shall return <code>{ "filename": string, "resume_text": string }</code>.</td>
+</tr>
+<tr>
+<td>FR-1.9</td>
+<td>The editor shall let the user edit the extracted text freely, in a source view with line numbers and a formatted preview.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="313-acceptance-criteria">3.1.3 Acceptance criteria</h3>
+<ul>
+<li>AC-1.1: Uploading a text-based PDF yields editable text whose headings appear as <code>## SECTION</code>.</li>
+<li>AC-1.2: Uploading a <code>.txt</code> file returns 400 and the message "Please upload a valid .pdf file."</li>
+<li>AC-1.3: A <code>.pdf</code> containing no text returns 400 with "No readable text found in PDF."</li>
+<li>AC-1.4: The sample resume loads and is scored without any server-side storage.</li>
+</ul>
+<h2 id="32-f2-calibration">3.2 F2 — Calibration</h2>
+<h3 id="321-description-and-priority">3.2.1 Description and priority</h3>
+<p>The same resume is judged differently for a fresher and a senior engineer. Calibration makes
+that explicit. Priority: <strong>High</strong>.</p>
+<h3 id="322-functional-requirements">3.2.2 Functional requirements</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-2.1</td>
+<td>The system shall accept <code>experience_level</code> ∈ {<code>fresher</code>, <code>experienced</code>}, defaulting to <code>fresher</code>.</td>
+</tr>
+<tr>
+<td>FR-2.2</td>
+<td>The system shall accept <code>target_domain</code> ∈ {<code>software</code>, <code>data</code>, <code>product</code>, <code>general</code>}, defaulting to <code>software</code>.</td>
+</tr>
+<tr>
+<td>FR-2.3</td>
+<td>The system shall accept an optional free-text <code>target_role</code>, defaulting to an empty string.</td>
+</tr>
+<tr>
+<td>FR-2.4</td>
+<td>Section weights shall be derived from <code>experience_level</code> per Section 4.5.</td>
+</tr>
+<tr>
+<td>FR-2.5</td>
+<td>Domain keyword sets, the portfolio advice, and role alignment shall use <code>target_domain</code> and <code>target_role</code>.</td>
+</tr>
+<tr>
+<td>FR-2.6</td>
+<td>A calibration modal shall be shown before the first analysis and be re-openable from the toolbar.</td>
+</tr>
+<tr>
+<td>FR-2.7</td>
+<td>Saving calibration shall re-run the analysis on the current text.</td>
+</tr>
+<tr>
+<td>FR-2.8</td>
+<td>The active calibration shall be visible in the toolbar at all times.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="323-acceptance-criteria">3.2.3 Acceptance criteria</h3>
+<ul>
+<li>AC-2.1: Fresher weights give Projects 20% and Education 15%; experienced weights give
+  Experience 35% and Projects 10%.</li>
+<li>AC-2.2: Weights sum to 1.0 within 0.01 for both levels.</li>
+<li>AC-2.3: Changing domain changes which skills count as domain-relevant.</li>
+<li>AC-2.4: Re-calibrating re-scores the resume and updates the weighted overall score.</li>
+</ul>
+<h2 id="33-f3f4-ats-scoring-and-explanation">3.3 F3/F4 — ATS Scoring and Explanation</h2>
+<h3 id="331-description-and-priority">3.3.1 Description and priority</h3>
+<p>The system computes a 0–100 score per section and a weighted overall score, then exposes every
+criterion so the user can see exactly where points were lost. Priority: <strong>Critical</strong> — this is
+the product's reason to exist.</p>
+<h3 id="332-functional-requirements">3.3.2 Functional requirements</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-3.1</td>
+<td>The system shall expose <code>POST /api/analyze</code> accepting <code>resume_text</code>, an optional <code>calibration</code>, optional <code>previous_scores</code> (map of section name to score), and an optional <code>previous_overall</code>.</td>
+</tr>
+<tr>
+<td>FR-3.2</td>
+<td>Analysis shall reject whitespace-only <code>resume_text</code> with HTTP 400 and "Resume text cannot be empty."</td>
+</tr>
+<tr>
+<td>FR-3.3</td>
+<td>The system shall partition the resume into the six canonical sections using heading detection; text before the first heading is Contact.</td>
+</tr>
+<tr>
+<td>FR-3.4</td>
+<td>Each section shall be scored 0–100 as the sum of its criteria, exactly per Section 4.</td>
+</tr>
+<tr>
+<td>FR-3.5</td>
+<td>Each criterion shall report <code>id</code>, <code>label</code>, <code>earned</code>, <code>max_points</code>, <code>passed</code>, <code>advice</code>, and <code>example</code>.</td>
+</tr>
+<tr>
+<td>FR-3.6</td>
+<td><code>passed</code> shall be true only when <code>earned == max_points</code>; partial credit is therefore shown as not passed but still contributes points.</td>
+</tr>
+<tr>
+<td>FR-3.7</td>
+<td>A missing or empty section shall score 0. No base, participation, or formatting points shall exist.</td>
+</tr>
+<tr>
+<td>FR-3.8</td>
+<td>The overall score shall be <code>round(Σ section_score × weight)</code>, clamped to 0–100.</td>
+</tr>
+<tr>
+<td>FR-3.9</td>
+<td>When previous values are supplied, each section shall report <code>previous_score</code> and <code>delta</code>, and the response shall report <code>previous_overall</code> and <code>overall_delta</code>.</td>
+</tr>
+<tr>
+<td>FR-3.10</td>
+<td>The response shall include <code>word_count</code> computed as the number of word tokens in the submitted text.</td>
+</tr>
+<tr>
+<td>FR-3.11</td>
+<td>The UI shall show the overall score, each section score with weight, a progress bar, and an expandable criterion list.</td>
+</tr>
+<tr>
+<td>FR-3.12</td>
+<td>Colour coding shall be consistent: green ≥ 80, amber ≥ 60, red &lt; 60.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="333-acceptance-criteria">3.3.3 Acceptance criteria</h3>
+<ul>
+<li>AC-3.1: For every section, the criteria maxima sum to exactly 100 (enforced by test).</li>
+<li>AC-3.2: For every section, <code>score == Σ earned</code> (enforced by test).</li>
+<li>AC-3.3: A resume with all six sections absent scores 0 overall.</li>
+<li>AC-3.4: The bundled strong-resume fixture scores ≥ 90 overall and ≥ 90 in every section.</li>
+<li>AC-3.5: Re-analysing an improved resume with previous values yields a positive delta.</li>
+<li>AC-3.6: Running the same input twice yields identical scores.</li>
+</ul>
+<h2 id="34-f5-rewrite-suggestions">3.4 F5 — Rewrite Suggestions</h2>
+<h3 id="341-description-and-priority">3.4.1 Description and priority</h3>
+<p>Suggestions turn a deduction into an actionable rewrite in the candidate's own voice.
+Priority: <strong>High</strong>.</p>
+<h3 id="342-functional-requirements">3.4.2 Functional requirements</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-4.1</td>
+<td>The system shall expose <code>POST /api/suggest</code> accepting <code>resume_text</code>, <code>calibration</code>, the current <code>sections</code>, and an optional <code>gemini_api_key</code>.</td>
+</tr>
+<tr>
+<td>FR-4.2</td>
+<td>If <code>sections</code> is empty, the backend shall compute them before generating suggestions.</td>
+</tr>
+<tr>
+<td>FR-4.3</td>
+<td>The suggestion API key shall be taken from the request when present, otherwise from the <code>GEMINI_API_KEY</code> environment variable.</td>
+</tr>
+<tr>
+<td>FR-4.4</td>
+<td>When a key is available, the backend shall consider the four lowest-scoring sections, include only those with failed criteria, and send their failed checks with earned/max points and advice, plus up to 1,400 characters of current section text.</td>
+</tr>
+<tr>
+<td>FR-4.5</td>
+<td>The prompt shall instruct the model to return only a JSON array of at most four objects with keys <code>section</code>, <code>title</code>, <code>reason</code>, <code>original_text</code>, <code>replacement_text</code>; to quote <code>original_text</code> verbatim or leave it empty; to output section content without the header; and to invent no facts.</td>
+</tr>
+<tr>
+<td>FR-4.6</td>
+<td>The backend shall strip Markdown code fences, parse the array, discard malformed items, and discard items whose <code>section</code> is not one of the six canonical names or whose <code>replacement_text</code> is empty.</td>
+</tr>
+<tr>
+<td>FR-4.7</td>
+<td>Each suggestion's <code>original_text</code> shall be marked <code>replaceable</code> only if the exact snippet (after trimming and CRLF normalisation) still occurs in the resume.</td>
+</tr>
+<tr>
+<td>FR-4.8</td>
+<td>On any Gemini failure — missing key, invalid key, network error, quota, or unparsable output — the system shall return rule-based suggestions instead, with <code>source = "rule_based"</code>.</td>
+</tr>
+<tr>
+<td>FR-4.9</td>
+<td>Rule-based suggestions shall be generated from the largest point gap among failed criteria of the lowest-scoring sections, capped at four, and shall always have <code>replaceable = false</code>.</td>
+</tr>
+<tr>
+<td>FR-4.10</td>
+<td>The response shall declare <code>source</code> as <code>gemini</code> or <code>rule_based</code>.</td>
+</tr>
+<tr>
+<td>FR-4.11</td>
+<td>The UI shall label the source ("Gemini rewrite" / "Rule-based advice") and provide a per-suggestion editable textarea and a Copy action.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="343-acceptance-criteria">3.4.3 Acceptance criteria</h3>
+<ul>
+<li>AC-4.1: With no key, <code>source</code> is <code>rule_based</code>, at least one suggestion is returned for the
+  sample resume, and every suggestion has <code>replaceable = false</code>.</li>
+<li>AC-4.2: A fenced JSON array is parsed into its object list.</li>
+<li>AC-4.3: A quoted snippet present in the resume yields <code>replaceable = true</code>; an absent snippet
+  yields <code>false</code>.</li>
+<li>AC-4.4: An invalid key does not raise an error to the client; the response is rule-based.</li>
+</ul>
+<h2 id="35-f6-safe-rewrite-application">3.5 F6 — Safe Rewrite Application</h2>
+<h3 id="351-description-and-priority">3.5.1 Description and priority</h3>
+<p>The original prototype appended rewrites to the end of the resume when the source text was not
+found, corrupting the document. The requirement is therefore strict. Priority: <strong>Critical</strong>
+(correctness).</p>
+<h3 id="352-functional-requirements">3.5.2 Functional requirements</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-5.1</td>
+<td>The Replace action shall be offered only when the suggestion is <code>replaceable</code>.</td>
+</tr>
+<tr>
+<td>FR-5.2</td>
+<td>The replace handler shall verify that <code>original_text</code> is a substring of the current resume text before mutating state.</td>
+</tr>
+<tr>
+<td>FR-5.3</td>
+<td>On success, only the exact matched snippet shall be replaced — once, literally, with no regular-expression interpretation of the replacement.</td>
+</tr>
+<tr>
+<td>FR-5.4</td>
+<td>The operation shall mark the document dirty and instruct the user to recheck.</td>
+</tr>
+<tr>
+<td>FR-5.5</td>
+<td>On failure, the system shall not modify the resume, shall not append text, and shall display: "That original text is no longer in the resume. Copy the suggestion instead."</td>
+</tr>
+<tr>
+<td>FR-5.6</td>
+<td>Every suggestion, replaceable or not, shall offer a Copy action that copies the edited replacement text.</td>
+</tr>
+<tr>
+<td>FR-5.7</td>
+<td>Each suggestion card shall show the snippet it would replace, so the user can judge it before applying.</td>
+</tr>
+<tr>
+<td>FR-5.8</td>
+<td>Per-suggestion edit state shall reset when a new suggestion set arrives.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="353-acceptance-criteria">3.5.3 Acceptance criteria</h3>
+<ul>
+<li>AC-5.1: A replaceable suggestion replaces its snippet in place and leaves the rest of the
+  document byte-identical.</li>
+<li>AC-5.2: A stale snippet produces the copy-instead message and no document change.</li>
+<li>AC-5.3: No code path appends suggestion text to the resume.</li>
+</ul>
+<h2 id="36-f7-re-score-with-deltas">3.6 F7 — Re-score with Deltas</h2>
+<h3 id="361-functional-requirements">3.6.1 Functional requirements</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-6.1</td>
+<td>The toolbar shall expose a Recheck action that re-analyses the current editor text.</td>
+</tr>
+<tr>
+<td>FR-6.2</td>
+<td>When the document is dirty, the action label shall indicate that unsaved edits will be scored.</td>
+</tr>
+<tr>
+<td>FR-6.3</td>
+<td>Re-analysis shall send the previous section scores and previous overall score so deltas can be computed.</td>
+</tr>
+<tr>
+<td>FR-6.4</td>
+<td>The UI shall display deltas as <code>+n</code> (green), <code>-n</code> (red), or <code>0</code> (neutral) for each section and for the overall score.</td>
+</tr>
+<tr>
+<td>FR-6.5</td>
+<td>Starting any analysis shall clear stale suggestions so the panel cannot show rewrites derived from an older document.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="362-acceptance-criteria">3.6.2 Acceptance criteria</h3>
+<ul>
+<li>AC-6.1: Editing a resume to fix a metric raises the Experience score and shows a positive delta.</li>
+<li>AC-6.2: The overall delta equals the new overall minus the previous overall.</li>
+</ul>
+<h2 id="37-f8-export">3.7 F8 — Export</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-7.1</td>
+<td>The toolbar shall offer a <code>.txt</code> download of the current editor contents.</td>
+</tr>
+<tr>
+<td>FR-7.2</td>
+<td>The download shall be generated client-side from a UTF-8 text blob.</td>
+</tr>
+</tbody>
+</table>
+<p>Acceptance: the downloaded file's text equals the editor contents exactly.</p>
+<h1 id="4-scoring-model">4. Scoring Model</h1>
+<p>This section is normative. The implementation in <code>backend/app/scorer.py</code> must match it, and
+the test suite enforces the structural invariants.</p>
+<h2 id="41-section-partitioning">4.1 Section Partitioning</h2>
+<p>The resume is split on canonical headings:</p>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Accepted headings (case-insensitive, optional <code>#</code>/<code>##</code>/<code>###</code> prefix)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Summary</td>
+<td>summary, professional summary, objective, profile, about me</td>
+</tr>
+<tr>
+<td>Experience</td>
+<td>experience, work experience, professional experience, employment, internships</td>
+</tr>
+<tr>
+<td>Skills</td>
+<td>skills, technical skills, core competencies, technologies</td>
+</tr>
+<tr>
+<td>Projects</td>
+<td>project, projects, academic projects, personal projects</td>
+</tr>
+<tr>
+<td>Education</td>
+<td>education, academic background, qualifications</td>
+</tr>
+</tbody>
+</table>
+<p>All lines before the first detected heading belong to <strong>Contact</strong>. A heading line is consumed
+and does not contribute content. Sections without content are empty and score 0.</p>
+<p>The PDF parser additionally normalises capitalised headings to <code>## SECTION</code>, so a parsed PDF
+is already in canonical form.</p>
+<h2 id="42-contact-100-points">4.2 Contact — 100 points</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Criterion</th>
+<th>Points</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>contact-name</code></td>
+<td>Full name in header</td>
+<td>10</td>
+<td>First non-empty line is 2–4 words containing only letters, <code>.</code>, <code>'</code>, or <code>-</code>.</td>
+</tr>
+<tr>
+<td><code>contact-email</code></td>
+<td>Professional email</td>
+<td>30</td>
+<td>Matches <code>name@host.tld</code>.</td>
+</tr>
+<tr>
+<td><code>contact-phone</code></td>
+<td>Phone number</td>
+<td>20</td>
+<td>8 or more digits, allowing <code>+</code>, spaces, dashes, dots, and parentheses.</td>
+</tr>
+<tr>
+<td><code>contact-linkedin</code></td>
+<td>LinkedIn profile</td>
+<td>20</td>
+<td>Contact text contains <code>linkedin.com</code>.</td>
+</tr>
+<tr>
+<td><code>contact-portfolio</code></td>
+<td>GitHub / portfolio</td>
+<td>20</td>
+<td>Contains <code>github.com</code>, <code>gitlab.com</code>, or the word "portfolio", or any non-LinkedIn URL.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="43-summary-100-points">4.3 Summary — 100 points</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Criterion</th>
+<th>Points</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>summary-length</code></td>
+<td>25–80 word summary</td>
+<td>25</td>
+<td>25 points for 25–80 words; 15 points for 15–100 words outside that band; otherwise 0.</td>
+</tr>
+<tr>
+<td><code>summary-role</code></td>
+<td>Target-role alignment</td>
+<td>20</td>
+<td>A significant token of <code>target_role</code> appears, or at least 2 domain keywords appear.</td>
+</tr>
+<tr>
+<td><code>summary-seniority</code></td>
+<td>Seniority / experience signal</td>
+<td>15</td>
+<td>Matches a pattern such as <code>N years</code>, graduate, student, intern, fresher, entry-level, senior, lead, mid-level, experienced.</td>
+</tr>
+<tr>
+<td><code>summary-metric</code></td>
+<td>Quantified achievement</td>
+<td>20</td>
+<td>At least one metric per Section 4.8.</td>
+</tr>
+<tr>
+<td><code>summary-skills</code></td>
+<td>Relevant skills or tools</td>
+<td>20</td>
+<td>At least 2 domain keyword hits or at least 2 tool hits.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="44-experience-100-points">4.4 Experience — 100 points</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Criterion</th>
+<th>Points</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>experience-timeline</code></td>
+<td>Role and timeline with year</td>
+<td>20</td>
+<td>Contains a 19xx or 20xx year.</td>
+</tr>
+<tr>
+<td><code>experience-bullets</code></td>
+<td>3+ experience bullets</td>
+<td>20</td>
+<td>At least 3 bullets.</td>
+</tr>
+<tr>
+<td><code>experience-verbs</code></td>
+<td>Action-verb bullets</td>
+<td>20</td>
+<td>At least 2 bullets begin with a listed action verb.</td>
+</tr>
+<tr>
+<td><code>experience-metrics</code></td>
+<td>2+ quantified metrics</td>
+<td>25</td>
+<td>At least 2 distinct metrics.</td>
+</tr>
+<tr>
+<td><code>experience-relevance</code></td>
+<td>Domain or tool keywords</td>
+<td>15</td>
+<td>At least 1 domain keyword or at least 1 tool keyword.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="45-skills-100-points">4.5 Skills — 100 points</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Criterion</th>
+<th>Points</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skills-count</code></td>
+<td>8+ listed skills</td>
+<td>30</td>
+<td>At least 8 unique items after splitting on <code>,</code>, <code>|</code>, <code>;</code>, <code>•</code>, newlines, and stripping <code>Category:</code> prefixes.</td>
+</tr>
+<tr>
+<td><code>skills-categories</code></td>
+<td>2+ skill categories</td>
+<td>25</td>
+<td>At least 2 distinct <code>Category:</code> prefixes on separate lines or <code>;</code> segments.</td>
+</tr>
+<tr>
+<td><code>skills-domain</code></td>
+<td>Domain-relevant skills</td>
+<td>25</td>
+<td>At least 3 domain keyword hits.</td>
+</tr>
+<tr>
+<td><code>skills-tools</code></td>
+<td>Tools, languages, or frameworks</td>
+<td>20</td>
+<td>At least 2 tool keyword hits.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="46-projects-100-points">4.6 Projects — 100 points</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Criterion</th>
+<th>Points</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>projects-tech</code></td>
+<td>Project name and tech stack</td>
+<td>20</td>
+<td>At least 1 tool keyword or a <code>|</code> separator.</td>
+</tr>
+<tr>
+<td><code>projects-bullets</code></td>
+<td>2+ project bullets</td>
+<td>20</td>
+<td>At least 2 bullets.</td>
+</tr>
+<tr>
+<td><code>projects-verbs</code></td>
+<td>Action-verb bullets</td>
+<td>20</td>
+<td>At least 2 bullets begin with an action verb.</td>
+</tr>
+<tr>
+<td><code>projects-metric</code></td>
+<td>Quantified project result</td>
+<td>20</td>
+<td>At least 1 metric.</td>
+</tr>
+<tr>
+<td><code>projects-tools</code></td>
+<td>2+ tech or tool keywords</td>
+<td>20</td>
+<td>At least 2 tool keyword hits.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="47-education-100-points">4.7 Education — 100 points</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Criterion</th>
+<th>Points</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>education-degree</code></td>
+<td>Degree title</td>
+<td>30</td>
+<td>Matches a degree pattern: B.Tech, M.Tech, B.E., M.E., B.Sc, M.Sc, B.S., M.S., BCA, MCA, bachelor, master, PhD, diploma.</td>
+</tr>
+<tr>
+<td><code>education-institution</code></td>
+<td>Institution name</td>
+<td>20</td>
+<td>Contains university, college, institute, school, academy, or polytechnic.</td>
+</tr>
+<tr>
+<td><code>education-year</code></td>
+<td>Graduation year</td>
+<td>20</td>
+<td>Contains a 19xx or 20xx year.</td>
+</tr>
+<tr>
+<td><code>education-gpa</code></td>
+<td>GPA, percentage, or honors</td>
+<td>15</td>
+<td>Contains GPA/CGPA/percentage/percent/honors/honours/distinction/first class, or an <code>x/y</code> ratio with 1–2 digit operands.</td>
+</tr>
+<tr>
+<td><code>education-coursework</code></td>
+<td>Relevant coursework</td>
+<td>15</td>
+<td>Contains coursework, courses, subjects, specialization, electives, or curriculum.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="48-metric-detection">4.8 Metric Detection</h2>
+<p>A metric is one of:</p>
+<ul>
+<li>a percentage, e.g. <code>35%</code>;</li>
+<li>a currency amount, e.g. <code>$12,000</code>;</li>
+<li>a multiplier, e.g. <code>3x</code>;</li>
+<li>an abbreviated magnitude, e.g. <code>20k</code>, <code>1.5M</code>;</li>
+<li>a count followed by a unit such as users, customers, clients, requests, records, rows,
+  transactions, projects, teams, engineers, students, downloads, installs, tickets, leads,
+  hours, days, weeks, or months — e.g. <code>500+ customers</code>;</li>
+<li>a reduction/increase verb followed by <code>by</code>/<code>to</code> and a number with a unit, e.g.
+  <code>reduced latency by 35%</code>;</li>
+<li>a duration, e.g. <code>120 ms</code>, <code>3 seconds</code>.</li>
+</ul>
+<p><strong>Bare years are explicitly excluded.</strong> <code>Worked on a project in 2025</code> yields no metric.
+Duplicates are removed case-insensitively.</p>
+<h2 id="49-action-verbs">4.9 Action Verbs</h2>
+<p>Action verbs are checked <strong>only at the start of a bullet</strong>. The checked list includes:
+achieved, accelerated, analysed/analyzed, architected, automated, boosted, built, collaborated,
+configured, coordinated, created, cut, debugged, decreased, delivered, deployed, designed,
+developed, documented, drove, engineered, enhanced, established, evaluated, fixed, generated,
+grew, implemented, improved, increased, integrated, launched, led, maintained, managed,
+mentored, migrated, monitored, optimized, owned, presented, reduced, redesigned, researched,
+revamped, scaled, secured, spearheaded, streamlined, tested, trained, transformed, won.</p>
+<p>A verb appearing mid-sentence does not satisfy the check.</p>
+<h2 id="410-section-weights-and-overall-score">4.10 Section Weights and Overall Score</h2>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Fresher</th>
+<th>Experienced</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Contact</td>
+<td>10%</td>
+<td>10%</td>
+</tr>
+<tr>
+<td>Summary</td>
+<td>15%</td>
+<td>15%</td>
+</tr>
+<tr>
+<td>Experience</td>
+<td>20%</td>
+<td>35%</td>
+</tr>
+<tr>
+<td>Skills</td>
+<td>20%</td>
+<td>20%</td>
+</tr>
+<tr>
+<td>Projects</td>
+<td>20%</td>
+<td>10%</td>
+</tr>
+<tr>
+<td>Education</td>
+<td>15%</td>
+<td>10%</td>
+</tr>
+</tbody>
+</table>
+<pre><code>overall = clamp(round(Σ (section_score × weight)), 0, 100)
+</code></pre>
+<p>Weights are normalised by their sum before use, so they always total 1.0. The weighted
+contribution of each section is reported for transparency.</p>
+<h2 id="411-reference-scores">4.11 Reference Scores</h2>
+<table>
+<thead>
+<tr>
+<th>Fixture</th>
+<th>Overall</th>
+<th>Section scores</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bundled sample resume (weak, fresher/software)</td>
+<td>35</td>
+<td>Contact 60, Summary 15, Experience 35, Skills 45, Projects 0, Education 70</td>
+</tr>
+<tr>
+<td>Strong-resume test fixture (fresher/software)</td>
+<td>100</td>
+<td>100 in all six sections</td>
+</tr>
+</tbody>
+</table>
+<p>These values are asserted by the automated tests and serve as regression anchors.</p>
+<h1 id="5-external-interface-requirements">5. External Interface Requirements</h1>
+<h2 id="51-user-interface">5.1 User Interface</h2>
+<p>Single page, dark theme, three regions:</p>
+<ol>
+<li><strong>Toolbar</strong> — brand, active calibration pill, Upload PDF, Load Sample, Recalibrate,
+   Gemini Key (toggles an optional key field), <code>.txt</code> export, and Recheck (highlighted when
+   the document has unsaved edits).</li>
+<li><strong>Left pane — Resume Editor</strong> — source view with synchronised line numbers, or a formatted
+   preview where <code>##</code> lines become headings, <code>-</code> lines become bullets, and the first line is
+   rendered as the candidate name. Shows word count and a dirty indicator.</li>
+<li><strong>Right pane — Analysis Panel</strong> — two tabs. <em>ATS Score</em> shows the overall score, the
+   "100% rule-based" label, delta badges, and expandable section cards. <em>Suggestions</em> shows
+   the source badge and rewrite cards with snippet, editable replacement, Copy, and Replace.</li>
+</ol>
+<p>The calibration modal presents two button groups (experience level, target domain) and one
+optional text field (target role), with Save &amp; Analyze and Cancel.</p>
+<p>Accessibility: buttons are real <code>&lt;button&gt;</code> elements with type attributes, the line-number
+gutter is <code>aria-hidden</code>, and no interaction depends on colour alone (points and deltas are
+always printed as text).</p>
+<h2 id="52-application-programming-interface">5.2 Application Programming Interface</h2>
+<p>Base path <code>/api</code>. JSON unless noted. Errors use FastAPI's <code>{ "detail": string }</code> shape.</p>
+<h3 id="521-get-apihealth">5.2.1 <code>GET /api/health</code></h3>
+<pre><code class="language-json">{ &quot;status&quot;: &quot;ok&quot; }
+</code></pre>
+<h3 id="522-get-apisample-resume">5.2.2 <code>GET /api/sample-resume</code></h3>
+<pre><code class="language-json">{ &quot;resume_text&quot;: &quot;Alex Rivera\n...&quot; }
+</code></pre>
+<h3 id="523-post-apiparse-pdf">5.2.3 <code>POST /api/parse-pdf</code></h3>
+<p><code>multipart/form-data</code> with field <code>file</code>. Success <code>200</code>:</p>
+<pre><code class="language-json">{ &quot;filename&quot;: &quot;resume.pdf&quot;, &quot;resume_text&quot;: &quot;Alex Rivera\n## SUMMARY\n...&quot; }
+</code></pre>
+<p>Failures: <code>400</code> for non-PDF, empty file, unparsable PDF, or no extractable text.</p>
+<h3 id="524-post-apianalyze">5.2.4 <code>POST /api/analyze</code></h3>
+<p>Request:</p>
+<pre><code class="language-json">{
+  &quot;resume_text&quot;: &quot;string&quot;,
+  &quot;calibration&quot;: {
+    &quot;experience_level&quot;: &quot;fresher&quot;,
+    &quot;target_domain&quot;: &quot;software&quot;,
+    &quot;target_role&quot;: &quot;Backend Engineer&quot;
+  },
+  &quot;previous_scores&quot;: { &quot;Contact&quot;: 60, &quot;Summary&quot;: 15 },
+  &quot;previous_overall&quot;: 35
+}
+</code></pre>
+<p><code>calibration</code>, <code>previous_scores</code>, and <code>previous_overall</code> are optional. Response:</p>
+<pre><code class="language-json">{
+  &quot;overall_score&quot;: 35,
+  &quot;previous_overall&quot;: 30,
+  &quot;overall_delta&quot;: 2,
+  &quot;word_count&quot;: 118,
+  &quot;sections&quot;: [
+    {
+      &quot;name&quot;: &quot;Contact&quot;,
+      &quot;score&quot;: 60,
+      &quot;weight&quot;: 0.1,
+      &quot;weighted_contribution&quot;: 6.0,
+      &quot;previous_score&quot;: 60,
+      &quot;delta&quot;: 0,
+      &quot;criteria&quot;: [
+        {
+          &quot;id&quot;: &quot;contact-email&quot;,
+          &quot;label&quot;: &quot;Professional email address&quot;,
+          &quot;earned&quot;: 30,
+          &quot;max_points&quot;: 30,
+          &quot;passed&quot;: true,
+          &quot;advice&quot;: &quot;Add a professional email address.&quot;,
+          &quot;example&quot;: &quot;alex.rivera@email.com&quot;
+        }
+      ]
+    }
+  ]
+}
+</code></pre>
+<p>Validation: <code>resume_text</code> is required; whitespace-only input returns <code>400</code>.</p>
+<h3 id="525-post-apisuggest">5.2.5 <code>POST /api/suggest</code></h3>
+<p>Request:</p>
+<pre><code class="language-json">{
+  &quot;resume_text&quot;: &quot;string&quot;,
+  &quot;calibration&quot;: { &quot;experience_level&quot;: &quot;fresher&quot;, &quot;target_domain&quot;: &quot;software&quot;, &quot;target_role&quot;: &quot;&quot; },
+  &quot;sections&quot;: [ /* SectionScore objects, optional */ ],
+  &quot;gemini_api_key&quot;: &quot;optional-string&quot;
+}
+</code></pre>
+<p>Response:</p>
+<pre><code class="language-json">{
+  &quot;source&quot;: &quot;gemini&quot;,
+  &quot;suggestions&quot;: [
+    {
+      &quot;id&quot;: &quot;ai-1&quot;,
+      &quot;section&quot;: &quot;Experience&quot;,
+      &quot;title&quot;: &quot;Quantify the API result&quot;,
+      &quot;reason&quot;: &quot;No quantified metric was found in this section.&quot;,
+      &quot;original_text&quot;: &quot;- Worked on backend tasks and helped the team with APIs.&quot;,
+      &quot;replacement_text&quot;: &quot;- Engineered RESTful APIs with FastAPI, cutting latency by [X%] for [N] daily requests.&quot;,
+      &quot;replaceable&quot;: true
+    }
+  ]
+}
+</code></pre>
+<p><code>source</code> is exactly <code>gemini</code> or <code>rule_based</code>. <code>suggestions</code> may be empty.</p>
+<h3 id="526-removed-endpoints">5.2.6 Removed endpoints</h3>
+<p><code>POST /api/chat</code> and every RAG/similarity endpoint are removed. Requests to them return 404.</p>
+<h2 id="53-software-interfaces">5.3 Software Interfaces</h2>
+<table>
+<thead>
+<tr>
+<th>Dependency</th>
+<th>Version</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>fastapi</td>
+<td>0.115.6</td>
+<td>HTTP API</td>
+</tr>
+<tr>
+<td>uvicorn[standard]</td>
+<td>0.34.0</td>
+<td>ASGI server</td>
+</tr>
+<tr>
+<td>pydantic</td>
+<td>2.10.4</td>
+<td>Request/response models and validation</td>
+</tr>
+<tr>
+<td>python-multipart</td>
+<td>0.0.20</td>
+<td>Multipart upload parsing</td>
+</tr>
+<tr>
+<td>pypdf</td>
+<td>5.1.0</td>
+<td>PDF text extraction</td>
+</tr>
+<tr>
+<td>google-genai</td>
+<td>1.2.0</td>
+<td>Gemini client</td>
+</tr>
+<tr>
+<td>python-dotenv</td>
+<td>1.0.1</td>
+<td><code>.env</code> loading</td>
+</tr>
+<tr>
+<td>pytest / httpx</td>
+<td>8.3.4 / 0.28.1</td>
+<td>Tests and test transport</td>
+</tr>
+<tr>
+<td>react, react-dom</td>
+<td>^18.3.1</td>
+<td>UI</td>
+</tr>
+<tr>
+<td>lucide-react</td>
+<td>^0.469.0</td>
+<td>Icons</td>
+</tr>
+<tr>
+<td>typescript</td>
+<td>^5.7.2</td>
+<td>Type checking</td>
+</tr>
+<tr>
+<td>vite, @vitejs/plugin-react</td>
+<td>^6.0.5 / ^4.3.4</td>
+<td>Dev server and build</td>
+</tr>
+</tbody>
+</table>
+<p>Gemini model: <code>gemini-2.5-flash</code>, called through <code>google.genai.Client.models.generate_content</code>.</p>
+<h2 id="54-communication-protocols">5.4 Communication Protocols</h2>
+<ul>
+<li>Browser ↔ frontend dev server: HTTP on port 5173.</li>
+<li>Frontend ↔ backend: HTTP JSON under <code>/api</code>, proxied by Vite to <code>http://127.0.0.1:8000</code>.</li>
+<li>Backend ↔ Gemini: HTTPS to Google's API, only when a key is supplied.</li>
+<li>CORS: permissive (<code>*</code>) because the application is single-user and local; this must be
+  tightened before any public deployment (see Risk R5).</li>
+</ul>
+<h1 id="6-non-functional-requirements">6. Non-Functional Requirements</h1>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Category</th>
+<th>Requirement</th>
+<th>Verification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NFR-1</td>
+<td>Performance</td>
+<td>A single analysis of a two-page resume completes in well under 200 ms; measured on the bundled sample: median <strong>1.37 ms</strong>, p95 <strong>2.41 ms</strong>, max <strong>5.72 ms</strong> over 200 runs. Scoring is linear in text length with compiled regexes.</td>
+<td>Measured locally (200-run loop)</td>
+</tr>
+<tr>
+<td>NFR-2</td>
+<td>Determinism</td>
+<td>Identical <code>resume_text</code> and <code>calibration</code> always produce identical scores. No randomness, clock, or network input affects scoring.</td>
+<td>Design + repeat-run check</td>
+</tr>
+<tr>
+<td>NFR-3</td>
+<td>Availability</td>
+<td>All features except AI wording work offline with no key.</td>
+<td>Rule-based suggestion test</td>
+</tr>
+<tr>
+<td>NFR-4</td>
+<td>Fault tolerance</td>
+<td>Any Gemini error is caught and converted into a rule-based response; the client never sees a 500 from the suggestion path.</td>
+<td>Key-failure test</td>
+</tr>
+<tr>
+<td>NFR-5</td>
+<td>Privacy</td>
+<td>Resume text is held only in browser and request memory. It leaves the machine only when the user supplies a Gemini key. No logs persist resume content and no database stores it.</td>
+<td>Code review</td>
+</tr>
+<tr>
+<td>NFR-6</td>
+<td>Usability</td>
+<td>A first-time user can load the sample, read the score breakdown, apply a rewrite, and see a delta without documentation. Labels are plain language; every criterion states points earned and available.</td>
+<td>Demo walkthrough</td>
+</tr>
+<tr>
+<td>NFR-7</td>
+<td>Explainability</td>
+<td>100% of the score is attributable to displayed criteria; no component is hidden from the UI.</td>
+<td>Design + UI review</td>
+</tr>
+<tr>
+<td>NFR-8</td>
+<td>Maintainability</td>
+<td>Rubric criteria are declared in one module, one function per section, each criterion carrying its own advice and example. A new check is one list entry plus its points.</td>
+<td>Code review</td>
+</tr>
+<tr>
+<td>NFR-9</td>
+<td>Type safety</td>
+<td>The backend runs with Pydantic-validated models; the frontend compiles with TypeScript <code>strict</code> settings and no build errors.</td>
+<td><code>tsc</code> in build</td>
+</tr>
+<tr>
+<td>NFR-10</td>
+<td>Portability</td>
+<td>Runs on Windows, macOS, and Linux with Python 3.10+ and Node 18+; no OS-specific paths or native builds beyond wheels.</td>
+<td>Setup on a clean machine</td>
+</tr>
+<tr>
+<td>NFR-11</td>
+<td>Testability</td>
+<td>Every API endpoint and the core scoring invariants are covered by automated tests; the suite runs in under two seconds.</td>
+<td><code>pytest -q</code></td>
+</tr>
+<tr>
+<td>NFR-12</td>
+<td>Response clarity</td>
+<td>Error responses use a single <code>detail</code> string that names the problem and the fix.</td>
+<td>API tests</td>
+</tr>
+</tbody>
+</table>
+<h1 id="7-system-architecture">7. System Architecture</h1>
+<h2 id="71-component-view">7.1 Component View</h2>
+<pre><code class="language-text">┌──────────────────────────────────────────────────────────────┐
+│ Browser — React 18 + Vite (port 5173)                        │
+│                                                              │
+│  App.tsx            state: text, calibration, analysis,      │
+│                     suggestions, dirty, loading, error       │
+│    ├─ ResumeEditor      source / preview, word count         │
+│    ├─ AnalysisPanel     tabs: ATS Score | Suggestions        │
+│    └─ CalibrationModal  2 choices + optional role            │
+│                                                              │
+│  api.ts  ── fetch ──►  /api/*  (Vite proxy)                  │
+└───────────────────────────┬──────────────────────────────────┘
+                            │ HTTP JSON
+┌───────────────────────────▼──────────────────────────────────┐
+│ FastAPI (port 8000)                                          │
+│                                                              │
+│  main.py          routes, CORS, sample resume                │
+│    ├─ pdf_parser.py      pypdf → normalised text             │
+│    ├─ scorer.py          section split + ATS rubric          │
+│    └─ ai_suggester.py    prompt → Gemini → validate           │
+│                          └─ fallback: rule-based advice      │
+│  models.py        Pydantic schemas                           │
+└───────────────────────────┬──────────────────────────────────┘
+                            │ HTTPS (optional)
+                     ┌──────▼──────┐
+                     │ Gemini 2.5  │
+                     │   Flash     │
+                     └─────────────┘
+</code></pre>
+<h2 id="72-module-responsibilities">7.2 Module Responsibilities</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Responsibility</th>
+<th>Must not</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>app/main.py</code></td>
+<td>Route definitions, upload validation, CORS, sample fixture</td>
+<td>Contain scoring logic</td>
+</tr>
+<tr>
+<td><code>app/pdf_parser.py</code></td>
+<td>PDF bytes → normalised editable text</td>
+<td>Store uploads</td>
+</tr>
+<tr>
+<td><code>app/scorer.py</code></td>
+<td>Section partitioning, rubric evaluation, weighted overall, deltas</td>
+<td>Call any network service</td>
+</tr>
+<tr>
+<td><code>app/ai_suggester.py</code></td>
+<td>Suggestion prompt, Gemini call, response parsing, snippet validation, deterministic fallback</td>
+<td>Compute or alter scores</td>
+</tr>
+<tr>
+<td><code>app/models.py</code></td>
+<td>Request/response schemas and enums</td>
+<td>Contain business rules</td>
+</tr>
+<tr>
+<td><code>frontend/src/api.ts</code></td>
+<td>Typed fetch wrappers and error extraction</td>
+<td>Contain presentation logic</td>
+</tr>
+<tr>
+<td><code>frontend/src/App.tsx</code></td>
+<td>State ownership, orchestration, safe replace</td>
+<td>Render detailed result markup</td>
+</tr>
+<tr>
+<td><code>AnalysisPanel.tsx</code></td>
+<td>Score and suggestion rendering, replace/copy actions</td>
+<td>Mutate resume text directly</td>
+</tr>
+<tr>
+<td><code>ResumeEditor.tsx</code></td>
+<td>Editing and preview rendering</td>
+<td>Call the API</td>
+</tr>
+<tr>
+<td><code>CalibrationModal.tsx</code></td>
+<td>Collect calibration</td>
+<td>Persist settings</td>
+</tr>
+</tbody>
+</table>
+<h2 id="73-key-sequences">7.3 Key Sequences</h2>
+<h3 id="731-analyze">7.3.1 Analyze</h3>
+<ol>
+<li>User clicks Recheck (or a load/upload completes).</li>
+<li><code>App</code> clears prior suggestions and marks loading.</li>
+<li><code>POST /api/analyze</code> with text, calibration, and previous scores when tracking deltas.</li>
+<li><code>scorer.analyze_resume</code> splits sections, evaluates criteria, applies weights, computes deltas.</li>
+<li><code>App</code> stores the response, clears the dirty flag, then requests suggestions with the new
+   sections.</li>
+<li><code>AnalysisPanel</code> renders the overall score and section cards.</li>
+</ol>
+<h3 id="732-suggest-and-apply">7.3.2 Suggest and apply</h3>
+<ol>
+<li><code>POST /api/suggest</code> with text, calibration, sections, and an optional key.</li>
+<li>With a key: build a prompt from the four weakest sections' failed criteria; call Gemini;
+   parse; validate snippets; return <code>source = "gemini"</code>.</li>
+<li>Without a key or on any failure: derive one suggestion per weak section from the largest
+   point gap; return <code>source = "rule_based"</code>.</li>
+<li>User edits the replacement in the card.</li>
+<li>Replace is offered only when <code>replaceable</code>; the handler re-checks <code>includes(original)</code>,
+   replaces once with a literal replacement, marks dirty.</li>
+<li>A missing snippet yields the copy-instead message and no change.</li>
+<li>Recheck re-scores and shows deltas.</li>
+</ol>
+<h2 id="74-design-rationale">7.4 Design Rationale</h2>
+<ul>
+<li><strong>Rules over retrieval.</strong> The requirement is to explain a deduction. A rule either passes or
+  fails and can print its own reason; a cosine similarity cannot. Removing TF-IDF also removed
+  scikit-learn, a knowledge base, and any claim that the score reflects real ATS behaviour it
+  could not substantiate.</li>
+<li><strong>Gemini scoped to wording.</strong> Generative models are good at rewriting a bullet and bad at
+  producing a stable, auditable number. The score stays local and deterministic; the model is
+  given the failed checks as constraints and never sees a score it could inflate.</li>
+<li><strong>Suggestions carry their own source text.</strong> <code>original_text</code> makes a suggestion verifiable.
+  The backend only marks it replaceable if the snippet exists, so the UI can never apply a
+  rewrite to the wrong place.</li>
+<li><strong>Copy-first fallback.</strong> Rule-based suggestions are advisory by design. They are useful
+  without a key and cannot corrupt a document, because they are never auto-applied.</li>
+<li><strong>Stateless API.</strong> No database keeps the tool demo-ready, privacy-preserving, and trivial to
+  run; every result is reproducible from the request.</li>
+</ul>
+<h1 id="8-data-requirements">8. Data Requirements</h1>
+<h2 id="81-entities">8.1 Entities</h2>
+<table>
+<thead>
+<tr>
+<th>Entity</th>
+<th>Fields</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Calibration</td>
+<td><code>experience_level</code>, <code>target_domain</code>, <code>target_role</code></td>
+<td>Enumerations validated by Pydantic</td>
+</tr>
+<tr>
+<td>SectionScore</td>
+<td><code>name</code>, <code>score</code>, <code>weight</code>, <code>weighted_contribution</code>, <code>previous_score?</code>, <code>delta?</code>, <code>criteria[]</code></td>
+<td><code>score</code> constrained 0–100</td>
+</tr>
+<tr>
+<td>CriterionResult</td>
+<td><code>id</code>, <code>label</code>, <code>earned</code>, <code>max_points</code>, <code>passed</code>, <code>advice</code>, <code>example</code></td>
+<td><code>earned</code>/<code>max_points</code> non-negative</td>
+</tr>
+<tr>
+<td>Suggestion</td>
+<td><code>id</code>, <code>section</code>, <code>title</code>, <code>reason</code>, <code>original_text</code>, <code>replacement_text</code>, <code>replaceable</code></td>
+<td><code>replaceable</code> computed server-side</td>
+</tr>
+</tbody>
+</table>
+<h2 id="82-persistence">8.2 Persistence</h2>
+<p>There is none. Resume text exists in React state and in request bodies; it is never written to
+disk, a database, or a log by the application. The only on-disk artefacts are source files,
+the optional <code>.env</code> holding <code>GEMINI_API_KEY</code>, and the frontend build output.</p>
+<h2 id="83-retention-and-privacy">8.3 Retention and Privacy</h2>
+<ul>
+<li>Server memory is released when the response completes.</li>
+<li>Gemini receives resume excerpts only on an explicit user action (Recheck with a key set) and
+  is subject to Google's terms; the README discloses this.</li>
+<li>The optional key entered in the toolbar is held in component state only, not in
+  <code>localStorage</code>, and is cleared on reload.</li>
+</ul>
+<h2 id="84-configuration">8.4 Configuration</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Required</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GEMINI_API_KEY</code></td>
+<td>No</td>
+<td>Enables Gemini suggestions when the request carries no key. Absent → rule-based advice.</td>
+</tr>
+</tbody>
+</table>
+<p>A <code>.env.example</code> documents the variable. <code>.env</code> is git-ignored.</p>
+<h1 id="9-verification-and-acceptance">9. Verification and Acceptance</h1>
+<h2 id="91-automated-tests">9.1 Automated Tests</h2>
+<p><code>backend/tests/test_api.py</code>, run with <code>pytest -q</code> (10 tests, all passing).</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Test</th>
+<th>Verifies</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>test_health</code></td>
+<td>Health endpoint contract</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>test_calibration_weights_differ_by_level</code></td>
+<td>Weights differ by level and each set sums to 1.0</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>test_every_section_has_100_points</code></td>
+<td>Six sections; criteria maxima sum to 100; score equals sum of earned; score in 0–100</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>test_strong_resume_scores_high</code></td>
+<td>Strong fixture ≥ 90 overall and per section</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>test_analyze_and_recheck_delta</code></td>
+<td>Improvement produces positive overall delta</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>test_metrics_ignore_years</code></td>
+<td>Bare years excluded; real metrics detected</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>test_gemini_json_parser_and_safe_snippet_validation</code></td>
+<td>Fenced JSON parsed; present snippet replaceable; absent snippet not</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>test_rule_based_suggestions_without_api_key</code></td>
+<td>Fallback source, non-empty suggestions, none replaceable</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>test_rejects_empty_resume</code></td>
+<td>Whitespace-only input returns 400</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>test_parse_pdf_rejects_non_pdf</code></td>
+<td>Non-PDF upload returns 400</td>
+</tr>
+</tbody>
+</table>
+<h2 id="92-build-gates">9.2 Build Gates</h2>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Command</th>
+<th>Expected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Backend syntax</td>
+<td><code>python -m compileall -q app</code></td>
+<td>Exit 0</td>
+</tr>
+<tr>
+<td>Backend behaviour</td>
+<td><code>pytest -q</code></td>
+<td>10 passed</td>
+</tr>
+<tr>
+<td>Frontend types + bundle</td>
+<td><code>npm run build</code></td>
+<td><code>tsc</code> clean, Vite build succeeds</td>
+</tr>
+</tbody>
+</table>
+<h2 id="93-manual-acceptance-scenario">9.3 Manual Acceptance Scenario</h2>
+<ol>
+<li>Start backend and frontend; open <code>http://localhost:5173</code>.</li>
+<li>Calibration modal appears; choose Fresher / Software, save.</li>
+<li>Sample loads and scores <strong>35</strong> overall with Contact 60, Summary 15, Experience 35,
+   Skills 45, Projects 0, Education 70.</li>
+<li>Expand Projects: every criterion shows <code>0/…</code> with advice.</li>
+<li>Open Suggestions: four rule-based cards, each with Copy and no Replace.</li>
+<li>Paste a Gemini key: suggestions carry the "Gemini rewrite" badge; at least one is replaceable.</li>
+<li>Click Replace: the snippet changes in place; the editor shows "Edited".</li>
+<li>Click Recheck: section and overall scores rise with <code>+</code> badges.</li>
+<li>Upload a PDF: text normalises to <code>## SECTION</code> headings and is editable.</li>
+<li>Export <code>.txt</code>: contents match the editor.</li>
+</ol>
+<h2 id="94-requirements-traceability">9.4 Requirements Traceability</h2>
+<table>
+<thead>
+<tr>
+<th>Requirement group</th>
+<th>Implementation</th>
+<th>Verification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FR-1.x ingestion</td>
+<td><code>main.py</code> routes, <code>pdf_parser.py</code>, <code>ResumeEditor.tsx</code></td>
+<td>Tests 9, 10; manual 9</td>
+</tr>
+<tr>
+<td>FR-2.x calibration</td>
+<td><code>models.CalibrationConfig</code>, <code>scorer.get_dynamic_weights</code>, <code>CalibrationModal.tsx</code></td>
+<td>Test 2</td>
+</tr>
+<tr>
+<td>FR-3.x scoring</td>
+<td><code>scorer.analyze_resume</code>, <code>models</code>, <code>AnalysisPanel.tsx</code></td>
+<td>Tests 3, 4, 6</td>
+</tr>
+<tr>
+<td>FR-4.x suggestions</td>
+<td><code>ai_suggester.py</code>, <code>SuggestionCard</code></td>
+<td>Tests 7, 8</td>
+</tr>
+<tr>
+<td>FR-5.x safe replace</td>
+<td><code>App.handleReplaceText</code>, <code>SuggestionCard.handleReplace</code></td>
+<td>Test 7 (validation); manual 7</td>
+</tr>
+<tr>
+<td>FR-6.x deltas</td>
+<td><code>scorer</code> previous fields, <code>DeltaBadge</code></td>
+<td>Test 5</td>
+</tr>
+<tr>
+<td>FR-7.x export</td>
+<td><code>App.handleDownloadTxt</code></td>
+<td>Manual 10</td>
+</tr>
+<tr>
+<td>NFR-1…12</td>
+<td>See Section 6</td>
+<td>Build gates and code review</td>
+</tr>
+</tbody>
+</table>
+<h1 id="10-constraints-assumptions-and-risks">10. Constraints, Assumptions, and Risks</h1>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Risk</th>
+<th>Likelihood</th>
+<th>Impact</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1</td>
+<td>A PDF has no text layer (scan), so extraction returns nothing</td>
+<td>Medium</td>
+<td>Medium</td>
+<td>Explicit 400 message; user can paste or edit text manually</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>Section headings differ from the recognised synonyms</td>
+<td>Medium</td>
+<td>Medium</td>
+<td>Broad synonym list, parser normalisation, and free editing in the source view</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>Rubric over- or under-rewards an unusual resume</td>
+<td>Medium</td>
+<td>Medium</td>
+<td>Criteria are explicit and disclosed; users see the exact reason and can judge it</td>
+</tr>
+<tr>
+<td>R4</td>
+<td>Gemini hallucinated facts in a rewrite</td>
+<td>Medium</td>
+<td>High</td>
+<td>Prompt forbids invention and asks for placeholders; replacement is user-editable; replace requires an existing snippet; advice says to verify facts</td>
+</tr>
+<tr>
+<td>R5</td>
+<td>Permissive CORS if deployed publicly</td>
+<td>Low (local use)</td>
+<td>High</td>
+<td>Documented; tighten <code>allow_origins</code> before any public deployment</td>
+</tr>
+<tr>
+<td>R6</td>
+<td>Gemini quota or outage</td>
+<td>Medium</td>
+<td>Low</td>
+<td>Deterministic fallback keeps the feature usable; UI labels the source</td>
+</tr>
+<tr>
+<td>R7</td>
+<td>API key entered by a user is exposed to that browser</td>
+<td>Low</td>
+<td>Medium</td>
+<td>Key is per-session, never persisted, and sent only to the local backend</td>
+</tr>
+<tr>
+<td>R8</td>
+<td>Score perceived as an official ATS verdict</td>
+<td>Medium</td>
+<td>Medium</td>
+<td>UI states "100% rule-based"; README calls it a readiness rubric</td>
+</tr>
+</tbody>
+</table>
+<h1 id="11-out-of-scope-and-future-work">11. Out of Scope and Future Work</h1>
+<p>Potential extensions, deliberately excluded from v1.0:</p>
+<ul>
+<li>Job-description targeting and keyword gap analysis.</li>
+<li>DOCX ingestion and layout-aware PDF parsing (columns, tables).</li>
+<li>Local, downloadable resume templates and PDF export with formatting preserved.</li>
+<li>Persistence of history, so a user can track scores across sessions.</li>
+<li>Authentication and multi-user accounts.</li>
+<li>Multilingual resumes and locale-specific conventions (e.g. non-US phone formats).</li>
+<li>Weight learning from recruiter feedback — this would break the explainability constraint
+  unless criteria remain visible.</li>
+</ul>
+<h1 id="12-appendices">12. Appendices</h1>
+<h2 id="121-sample-resume-fixture">12.1 Sample Resume Fixture</h2>
+<pre><code class="language-text">Alex Rivera
+alex.rivera@email.com | +1 (555) 234-5678
+
+## SUMMARY
+Motivated Computer Science student looking for a software internship to learn new technologies.
+
+## EXPERIENCE
+Software Intern - BrightApps (Summer 2025)
+- Worked on backend tasks and helped the team with APIs.
+- Fixed bugs in the frontend dashboard.
+
+## SKILLS
+Python, JavaScript, HTML, CSS, Git
+
+## PROJECTS
+Task Tracker App
+- Built a to-do list web app for managing daily tasks.
+
+## EDUCATION
+B.Tech in Computer Science, State University (2022 - 2026)
+</code></pre>
+<h2 id="122-domain-keyword-sets-abridged">12.2 Domain Keyword Sets (abridged)</h2>
+<ul>
+<li><strong>Software:</strong> python, java, javascript, typescript, react, node, fastapi, django, flask, sql,
+  postgresql, mongodb, docker, kubernetes, aws, azure, gcp, git, linux, html, css, rest, api,
+  apis, backend, frontend, full-stack, web, graphql, microservices, c++, c#, .net, spring,
+  flutter, swift, kotlin, redis, ci/cd, testing, pytest, jest, data structures, algorithms.</li>
+<li><strong>Data:</strong> python, sql, pandas, numpy, scikit-learn, tensorflow, pytorch, keras, machine
+  learning, deep learning, nlp, computer vision, tableau, power bi, excel, statistics,
+  regression, classification, clustering, bigquery, spark, airflow, etl, data visualization,
+  a/b testing, matlab.</li>
+<li><strong>Product:</strong> product management, roadmap, stakeholder, user research, analytics, a/b testing,
+  jira, confluence, figma, kpi, okr, agile, scrum, wireframe, prototyping, go-to-market,
+  requirement, prd, sql, excel, tableau, mixpanel, amplitude.</li>
+<li><strong>General:</strong> communication, leadership, project management, excel, sql, analytics,
+  stakeholder, problem solving, teamwork, documentation, reporting, budgeting, operations,
+  customer service, sales, marketing.</li>
+</ul>
+<h2 id="123-repository-layout">12.3 Repository Layout</h2>
+<pre><code class="language-text">Group_1/
+├── Source_Code/
+│   ├── backend/
+│   │   ├── app/
+│   │   │   ├── main.py
+│   │   │   ├── models.py
+│   │   │   ├── scorer.py
+│   │   │   ├── ai_suggester.py
+│   │   │   └── pdf_parser.py
+│   │   ├── tests/test_api.py
+│   │   ├── requirements.txt
+│   │   └── .env.example
+│   ├── frontend/
+│   │   └── src/
+│   │       ├── App.tsx
+│   │       ├── api.ts
+│   │       ├── types.ts
+│   │       ├── index.css
+│   │       └── components/
+│   │           ├── ResumeEditor.tsx
+│   │           ├── AnalysisPanel.tsx
+│   │           └── CalibrationModal.tsx
+│   ├── README.md
+│   └── .gitignore
+├── Documentation/
+│   ├── SRS.md
+│   ├── SRS.html
+│   └── build_docs.py
+└── implementation_plan.md
+</code></pre>
+<h2 id="124-glossary-of-rubric-advice">12.4 Glossary of Rubric Advice</h2>
+<p>Every criterion carries a fixed <code>advice</code> and <code>example</code>. Examples:</p>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th>Advice</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>summary-length</code></td>
+<td>Keep the summary to 2–3 sentences (about 25–80 words).</td>
+<td>"Computer Science graduate with hands-on experience building FastAPI and React applications."</td>
+</tr>
+<tr>
+<td><code>experience-verbs</code></td>
+<td>Start each bullet with a strong action verb.</td>
+<td>"Engineered a REST API using FastAPI and PostgreSQL."</td>
+</tr>
+<tr>
+<td><code>experience-metrics</code></td>
+<td>Add at least two numbers such as %, $, users, latency, or time saved.</td>
+<td>"Reduced API latency by 35% across 20k daily requests."</td>
+</tr>
+<tr>
+<td><code>projects-tech</code></td>
+<td>List each project with its name and tech stack.</td>
+<td>"Resume Analyser | Python, FastAPI, React, PostgreSQL"</td>
+</tr>
+<tr>
+<td><code>education-coursework</code></td>
+<td>List relevant coursework.</td>
+<td>"Relevant Coursework: Data Structures, Algorithms, DBMS, Machine Learning"</td>
+</tr>
+</tbody>
+</table>
+<p><em>End of document.</em></p>
+</div>
+</body>
+</html>
